@@ -1,7 +1,15 @@
-import { Form } from "react-router";
+import { Form, redirect, useNavigate } from "react-router";
 import type { Route } from "./+types/edit-contact";
 
-import { getContact } from "../data";
+import { getContact, updateContact } from "../data";
+
+export async function action({ params, request }: Route.ActionArgs) {
+  invariant(params.contactId, "Missing contactId param");
+  const formData = await request.formData();
+  const updates = Object.fromEntries(formData);
+  await updateContact(params.contactId, updates);
+  return redirect(`/contacts/${params.contactId}`);
+}
 
 export async function loader({ params }: Route.LoaderArgs) {
   const contact = await getContact(params.contactId);
@@ -13,6 +21,7 @@ export async function loader({ params }: Route.LoaderArgs) {
 
 export default function EditContact({ loaderData }: Route.ComponentProps) {
   const { contact } = loaderData;
+  const navigate = useNavigate();
 
   return (
     <Form key={contact.id} id="contact-form" method="post">
@@ -58,8 +67,13 @@ export default function EditContact({ loaderData }: Route.ComponentProps) {
       </label>
       <p>
         <button type="submit">Save</button>
-        <button type="button">Cancel</button>
+        <button onClick={() => navigate(-1)} type="button">
+          Cancel
+        </button>
       </p>
     </Form>
   );
+}
+function invariant(contactId: string, arg1: string) {
+  throw new Error("Function not implemented.");
 }
